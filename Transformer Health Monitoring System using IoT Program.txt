@@ -1,0 +1,209 @@
+#include <htc.h>
+#define ldata PORTD
+#define rs RE2
+#define rw RE1
+#define en RE0
+#define _XTAL_FREQ 1000000
+///////////////////////////////////////////////////////////////
+void Lcdinit();
+void Lcddisplay(unsigned char value[]);
+void lcddata(unsigned char value);
+void Lcdcmd(unsigned char value);
+void delay(unsigned int del);
+void txs(unsigned char val);
+//void putchar(unsigned char val[16],char len);
+void delay(unsigned int del);
+void delay1();
+////////////////////////////////////////////////////////////////
+void delay(unsigned int del)
+	{
+	while(del--);
+ 	}
+void delay1()
+	{
+	 int i;
+	 for(i=0;i<3000;i++);
+	}
+void Lcdinit()
+{
+Lcdcmd(0x38);
+
+Lcdcmd(0x08);
+Lcdcmd(0x0c);
+Lcdcmd(0x06);
+Lcdcmd(0x80);
+
+}
+
+void Lcdcmd(unsigned char value)
+{
+ldata=value;
+rs=0;
+rw=0;
+en=1;
+delay1();en=0;
+return;
+}
+
+void lcddata(unsigned char value)
+{
+ldata=value;
+rs=1;
+rw=0;
+en=1;
+delay1();
+en=0;
+}
+//////////////////////////////
+void dataa(const unsigned char *disp) 
+{
+	int x;
+	for(x=0;disp[x]!=0;x++)
+	{
+	lcddata(disp[x]);
+	}
+}
+
+void send(const unsigned char *dis) 
+{
+	int y;
+	for(y=0;dis[y]!=0;y++)
+	{
+	txs(dis[y]);
+	}
+}
+void txs(unsigned char val)
+{
+int i;
+while(!TXIF)
+   continue;
+TXREG=val;
+for(i=0;i<1000;i++);
+}
+void delay2()
+   {
+   long i;
+   for(i=0;i<50000;i++);
+   }
+
+unsigned char rxs(void)
+{
+int c=0;
+while(!RCIF)
+   {
+       c++;
+          if(c>5000)
+             break;
+   
+   }
+return RCREG;
+}
+int val[6],flagx=0,val1[9],val2[9],val3[9];
+int j=0;
+int x;
+int sp,sp1,spt;
+   unsigned int d=0,e=0,f=0,flgg=0;
+   unsigned int m=0;
+void Delay()                                               
+{
+     long i;
+     for(i=0;i<40000;i++)
+       {
+
+
+      }
+}
+void sendtx(const unsigned char *disp) 
+{
+	int x;
+	for(x=0;disp[x]!=0;x++)
+	{
+	txs(disp[x]);
+	}
+}	
+
+
+/* Sample code to set up the A2D module */
+void init_a2d(void){
+   ADCON0=0;   // select Fosc/2
+   ADCON1=2;   // select left justify result. A/D port configuration 0
+   ADON=1;      // turn on the A2D conversion module
+}
+
+/* Return an 8 bit result */
+unsigned char read_a2d(unsigned char channel){
+   channel&=0x07;   // truncate channel to 3 bits
+   ADCON0&=0xC5;   // clear current channel select
+   ADCON0|=(channel<<3); 
+__delay_ms(2);
+__delay_ms(2);	// apply the new channel select
+   ADGO=1;   // initiate conversion on the selected channel
+   while(ADGO)continue;
+   return(ADRESH);   // return 8 MSB of the result
+}
+
+Void main()         //Main entry
+{
+unsigned char temp,ecg;
+int pp=7;
+   CMCON=0x07;
+   RCSTA=0x90;                        // receive enabling with the same speed
+   TXSTA =(0x24);               // High speed selection baud rate 9600
+   SPBRG = 64;
+   CVRCON=0x00;
+   TRISD=0x00;
+   TRISE=0x00;
+   TRISB=0x00;
+//	InitPWM();	
+
+   Lcdinit();
+   init_a2d();
+ 
+	RB0=0;
+    RB1=1;
+	RB2=0;
+	RB3=0;
+         
+     while(1)
+   {   
+   val[0]=read_a2d(0);
+   Lcdcmd(0x80);
+   dataa("Gas:");
+txs("Gas:");
+   lcddata((val[0]/100)+0x30);
+   lcddata((val[0]%100)/10+0x30);
+   lcddata((val[0]%10)+0x30);
+   
+   val1[0]=read_a2d(1);
+   Lcdcmd(0x88);
+   dataa("cur:");
+txs("curr:");
+   lcddata((val1[0]/100)+0x30);
+   lcddata((val1[0]%100)/10+0x30);
+   lcddata((val1[0]%10)+0x30);
+	val2[0]=read_a2d(2)+15;
+   Lcdcmd(0xc0);
+   dataa("Temp:");
+txs("temp");
+   lcddata((val2[0]/100)+0x30);
+   lcddata((val2[0]%100)/10+0x30);
+   lcddata((val2[0]%10)+0x30);
+   
+   	val3[0]=read_a2d(3);
+   Lcdcmd(0xc9);
+   dataa("Oil:");
+txs("oil");
+   lcddata((val3[0]/100)+0x30);
+   lcddata((val3[0]%100)/10+0x30);
+   lcddata((val3[0]%10)+0x30);
+if (temp>35)
+{
+{
+RB0=1;
+}
+else
+RB0=0;
+}
+
+}
+}
